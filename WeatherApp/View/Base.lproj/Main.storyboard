@@ -93,7 +93,7 @@
                     </view>
                     <navigationItem key="navigationItem" id="Iga-Jf-TyE"/>
                     <connections>
-                        <outlet property="activityIndicatior" destination="w85-5f-laa" id="MUL-kI-9tD"/>
+                        <outlet property="activityIndicator" destination="w85-5f-laa" id="MUL-kI-9tD"/>
                         <outlet property="city" destination="5Uf-08-CKc" id="Iaz-Iq-QkW"/>
                         <outlet property="date" destination="C42-Dn-H7M" id="hKJ-Lz-b7h"/>
                         <outlet property="icon" destination="Fre-fW-kdb" id="UZo-Sl-z7n"/>

@@ -16,7 +16,7 @@ enum DownloaderError: Error {
 }
 
 class LocationDownloader {
-    private let recastAIToken = "356368f0ae5b0481a0229d25c83d9bf3"
+    private let recastAIToken = "YOUR_RECAST_AI_API_KEY_HERE"
     private var recastClient: RecastAIClient?
     
     init() {
@@ -24,35 +24,36 @@ class LocationDownloader {
     }
     
     func requestLocation(city: String, completion: @escaping (Result<City, DownloaderError>) -> Void) {
-        self.recastClient?.textRequest(city, successHandler: { response in
-            let location = self.getLocation(response: response)
-            if location == nil {
-                completion(.failure(DownloaderError.invalidCity))
+        recastClient?.textRequest(city, successHandler: { [weak self] response in
+            guard let self = self,
+                  let location = self.parseLocationFromResponse(response) else {
+                completion(.failure(.invalidCity))
                 return
             }
-            completion(.success(location!))
-        }, failureHandle: { error in
-            completion(.failure(DownloaderError.noInternetConnection))
+            completion(.success(location))
+        }, failureHandle: { _ in
+            completion(.failure(.noInternetConnection))
         })
     }
     
-    private func getLocation(response: Response) -> City? {
-        var city: City
-        
-        guard let arr = response.entities!["location"] as? [NSDictionary] else {
+    private func parseLocationFromResponse(_ response: Response) -> City? {
+        guard let locationArray = response.entities?["location"] as? [NSDictionary],
+              let locationData = locationArray.first,
+              var cityName = locationData.value(forKey: "raw") as? String,
+              let latitude = locationData.value(forKey: "lat") as? NSNumber,
+              let longitude = locationData.value(forKey: "lng") as? NSNumber else {
             return nil
         }
         
-        guard var cityName = arr[0].value(forKey: "raw") as? String else { return nil }
-        if let countryState = arr[0].value(forKey: "country") as? String {
+        if let countryState = locationData.value(forKey: "country") as? String {
             cityName += ", \(countryState.uppercased())"
         }
-        guard let latitude = arr[0].value(forKey: "lat") as? NSNumber else { return nil }
-        guard let longitude = arr[0].value(forKey: "lng") as? NSNumber else { return nil }
-
-        city = City(city: cityName, longitude: longitude.doubleValue, latitude: latitude.doubleValue)
-                
-        return city
+        
+        return City(
+            city: cityName,
+            longitude: longitude.doubleValue,
+            latitude: latitude.doubleValue
+        )
     }
 }
 

@@ -18,23 +18,26 @@ class WeatherDownloader {
     }
 
     func makeRequest(location: City, completion: @escaping (Result<Temperature, Error>) -> Void) {
-        
-        weatherClient?.current(latitude: location.latitude, longitude: location.longitude, result: { result in
+        weatherClient?.current(latitude: location.latitude, longitude: location.longitude) { result in
             switch result {
             case .success(let forecast):
-                if let current = forecast.currently {
-                    let tmp = current.temperature?.converterFromFtoC()
-                    let summary = current.summary
-                    let icon = current.icon
-                    
-                    let temperature = Temperature(tmp: tmp!, summary: summary!, icon: icon)
-                    
-                    completion(.success(temperature))
+                guard let current = forecast.currently,
+                      let temp = current.temperature?.convertFromFahrenheitToCelsius(),
+                      let summary = current.summary else {
+                    completion(.failure(DownloaderError.noConnectionWithAPI))
+                    return
                 }
+                
+                let temperature = Temperature(
+                    tmp: temp,
+                    summary: summary,
+                    icon: current.icon
+                )
+                completion(.success(temperature))
+                
             case .failure:
                 completion(.failure(DownloaderError.noConnectionWithAPI))
             }
-        })
-        
+        }
     }
 }
